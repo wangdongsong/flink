@@ -14,6 +14,10 @@ task createJavaProject {
 
 }
 
+ext {
+    flinkVersion = "1.3.2"
+}
+
 repositories {
 	mavenLocal()
     jcenter()
@@ -25,4 +29,8 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
+
+    compile group: "org.apache.flink", name: "flink-core", version: "${flinkVersion}"
+    compile group: "org.apache.flink", name: "flink-clients_2.11", version: "${flinkVersion}"
+    compile group: "org.apache.flink", name: "flink-streaming-java_2.11", version: "${flinkVersion}"
 }
