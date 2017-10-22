@@ -1,5 +1,6 @@
 package com.wds.flink.quick;
 
+import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -24,13 +25,32 @@ public class SocketWordCount {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<String> text = env.socketTextStream("localhost", port, "\n");
 
-        DataStream<WordWithCount> windowCounts = text
+        DataStream<WordWithCount> windowCounts = text.flatMap(new FlatMapFunction<String, WordWithCount>() {
+            @Override
+            public void flatMap(String value, Collector<WordWithCount> out) throws Exception {
+                for (String word : value.split("\\s")) {
+                    out.collect(new WordWithCount(word, 1L));
+                }
+            }
+        }).keyBy("word").timeWindow(Time.seconds(5), Time.seconds(1)).reduce(new ReduceFunction<WordWithCount>() {
+            @Override
+            public WordWithCount reduce(WordWithCount value1, WordWithCount value2) throws Exception {
+                return new WordWithCount(value1.word, value1.count + value2.count);
+            }
+        });
+
+        /*
+        DataStream<WordWithCount> windowCounts = text.flatMap((String value, Collector<WordWithCount> out) -> {
+                for (String word : value.split("\\s")) {
+                    out.collect(new WordWithCount(word, 1L));
+                }})
                 .flatMap((String value, Collector<WordWithCount> out) -> Stream.of(value.split("\\s")).forEach((word) -> {
                         out.collect(new WordWithCount(word, 1L));
                 }))
                 .keyBy("word")
-                .timeWindow(Time.seconds(5), Time.seconds(1)).sum("word");
-                //.reduce((a, b) -> {return new WordWithCount(a.word, a.count + b.count);});
+                .timeWindow(Time.seconds(5), Time.seconds(1))//.sum("word");
+                .reduce((WordWithCount a, WordWithCount b) -> {return new WordWithCount(a.word, a.count + b.count);});
+          */
 
         windowCounts.print().setParallelism(1);
 
