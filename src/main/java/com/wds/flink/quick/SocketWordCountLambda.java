@@ -5,6 +5,8 @@ import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
@@ -39,7 +41,9 @@ public class SocketWordCountLambda {
                 .map(s -> s.split("\\s"))
                 .flatMap((String[] strs, Collector<SocketWordCount.WordWithCount> out) ->{ Arrays.stream(strs).forEach(str -> out.collect(new SocketWordCount.WordWithCount(str, 1L)));})
                 .keyBy("word")
-                .timeWindow(Time.seconds(5), Time.seconds(1))
+                //.timeWindow(Time.seconds(5), Time.seconds(1))
+                //.window(TumblingEventTimeWindows.of(Time.seconds(5))
+                .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
                 .sum("count");
 
         windowCounts.print().setParallelism(1);
