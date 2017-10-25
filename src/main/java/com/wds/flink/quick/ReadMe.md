@@ -6,4 +6,4 @@
 ./flink run --c com.wds.flink.quick.SocketWordCount your.jar
 ```
 
-通过--class参数指定主类
+通过--c参数指定主类
