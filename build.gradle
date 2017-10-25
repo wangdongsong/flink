@@ -13,6 +13,7 @@ jar{
 }
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 //创建工程的目录结构
 task createJavaProject {
