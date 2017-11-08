@@ -47,7 +47,7 @@ public class SocketWordCountProcessFunction {
                 .keyBy(0)
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(5))).apply((Tuple tuple, TimeWindow window, Iterable<Tuple2<String, Integer>> input, Collector<Tuple2<String, Integer>> out) -> {
 
-                    System.out.println("-------------start---------------");
+                    System.out.println("-------------start-----" + Thread.currentThread().getName() + "----------");
                     System.out.println(tuple + Thread.currentThread().getName());
 
                     input.forEach((t) -> System.out.println(t + Thread.currentThread().getName()));
