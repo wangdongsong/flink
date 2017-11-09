@@ -37,7 +37,12 @@ public class SocketWordCountTuple {
                 .keyBy(0)
                 .timeWindow(Time.seconds(5))
                 .sum(1);
-        dataStream.print();
+
+        //不设置并行线程数时，输出时会打出线程ID号
+        //dataStream.print();
+
+        //Tuple2的输出模式为（key, count)
+        dataStream.print().setParallelism(1);
 
         env.execute("SocketWordCountTuple");
     }
