@@ -4,12 +4,7 @@ import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.ProcessFunction;
-import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
-import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
-import org.apache.flink.streaming.api.transformations.OneInputTransformation;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
@@ -32,7 +27,7 @@ public class SocketWordCountProcessFunction {
             hostname = param.has("hostname") ? param.get("hostname") : "localhost";
             port = param.has("port") ? param.getInt("port") : port;
         } catch (Exception e) {
-            System.err.println("No port specified. Please run SocketWordCountTuple --port");
+            System.err.println("No port specified. Please run SocketWordCountProcessFunction --port");
             return;
         }
 
@@ -45,19 +40,21 @@ public class SocketWordCountProcessFunction {
                     });
                 })
                 .keyBy(0)
-                .window(TumblingProcessingTimeWindows.of(Time.seconds(5))).apply((Tuple tuple, TimeWindow window, Iterable<Tuple2<String, Integer>> input, Collector<Tuple2<String, Integer>> out) -> {
-
-                    System.out.println("-------------start-----" + Thread.currentThread().getName() + "----------");
-                    System.out.println(tuple + Thread.currentThread().getName());
-
-                    input.forEach((t) -> System.out.println(t + Thread.currentThread().getName()));
+                .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
+                .apply((Tuple tuple, TimeWindow window, Iterable<Tuple2<String, Integer>> input, Collector<Tuple2<String, Integer>> out) -> {
 
                     Integer sum = StreamSupport.stream(input.spliterator(), false).mapToInt((Tuple2<String, Integer> in) -> in.f1).sum();
+
+                    out.collect(new Tuple2<>((String) tuple.getField(0), sum));
                 });
 
-        dataStream.print();
+        //不设置并行线程数时，输出时会打出线程ID号
+        //dataStream.print();
 
-        env.execute("SocketWordCountTuple");
+        //Tuple2的输出模式为（key, count)
+        dataStream.print().setParallelism(1);
+
+        env.execute("SocketWordCountProcessFunction");
     }
 
 
